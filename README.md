@@ -56,13 +56,10 @@ ETLE Speed Detector is a microcontroller-based system that automatically measure
 
 ### Circuit Diagram
 Proteus:
-OTW (screenshot)
+<img width="1040" height="872" alt="image" src="https://github.com/user-attachments/assets/d8de3be5-64a1-4649-bd2c-694ee239ad84" />
 
 Physic:
-OTW (screenshot)
-
-### Pin Assignment/Hardware Connection
-OTW
+<img width="1705" height="960" alt="image" src="https://github.com/user-attachments/assets/857c2f4a-d25c-4950-b6ea-ac9b143d36ac" />
 
 
 ## 3. Software Implementation (wait for final code)
@@ -87,9 +84,6 @@ OTW
 | 1 | Below minimum range  | 50               | Yellow       | `TOO SLOW`       | Off             |
 | 2 | Within safe range    | 50               | Green        | `SAFE SPEED`     | Off             |
 | 3 | Above threshold      | 50               | Red          | `OVER SPEED!`    | On              |
-
-### Video Result
-YouTube link: OTW
 
 ### Evaluation
 OTW after test
