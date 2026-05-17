@@ -79,11 +79,11 @@ Physic:
 
 ## 4. Test and Performance Evaluation
 ### Test Cases
-| # | Scenario             | Threshold (km/h) | Expected LED | Expected LCD     | Expected Buzzer |
+| # | Scenario             | Threshold (km/h) | Expected LED | Expected LCD     | Screenshot |
 | - | -------------------- | ---------------- | ------------ | ---------------- | --------------- |
-| 1 | Below minimum range  | 50               | Yellow       | `TOO SLOW`       | Off             |
-| 2 | Within safe range    | 50               | Green        | `SAFE SPEED`     | Off             |
-| 3 | Above threshold      | 50               | Red          | `OVER SPEED!`    | On              |
+| 1 | Idle state  | 0               | Yellow       | `Waiting`       | <img width="1040" height="872" alt="image" src="https://github.com/user-attachments/assets/e155b44e-acba-4075-b8c0-0ea20c32c87c" />|
+| 2 | Within safe range    | 50               | Green        | `SAFE SPEED`     |<img width="1255" height="898" alt="image" src="https://github.com/user-attachments/assets/0c337af8-67cf-4bc2-983b-176c30f8143d" />|
+| 3 | Above speed limit      | 50               | Red          | `OVER SPEED!`    |<img width="1272" height="901" alt="image" src="https://github.com/user-attachments/assets/78241f6c-ee43-4eb2-92eb-015d988b2d5c" />|
 
 ### Evaluation
 OTW after test
