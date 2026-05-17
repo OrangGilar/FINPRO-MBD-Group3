@@ -31,12 +31,11 @@ ETLE Speed Detector is a microcontroller-based system that automatically measure
 
 **Speed classification:**
  
-| Condition                                      | LED      | LCD Message   | Buzzer |
-| ---------------------------------------------- | -------- | --------------| ------ |
-| Speed < 10 km/h                                | Yellow   | TOO SLOW      | Off    |
-| 10 km/h ≤ Speed ≤ Threshold                    | Green    | SAFE SPEED    | Off    |
-| Speed > Threshold                              | Red      | OVER SPEED!   | On     |
-
+| Condition                                      | LED      | LCD Message     | Buzzer |
+| ---------------------------------------------- | -------- | --------------- | ------ |
+| Idle state                               | Yellow   | `Waiting`      | Off    |
+| 5 km/h ≤ Speed ≤ Threshold                    | Green    | `SAFE SPEED`    | Off    |
+| Speed > Threshold                              | Red      | `OVER SPEED!`   | On     |
 
 ## 2. Hardware Design and Implementation
 
@@ -54,39 +53,64 @@ ETLE Speed Detector is a microcontroller-based system that automatically measure
 | 9   | Hot Wheels                                | 1         | Test vehicle                               |
 | 10  | Hot Wheels Launcher                       | 1         | Vehicle propulsion for testing             |
 
+### Pin Assignment
+ 
+| Function       | ATmega328P Pin | Direction |
+| -------------- | -------------- | --------- |
+| IR Sensor 1    | PD2            | Input     |
+| IR Sensor 2    | PD3            | Input     |
+| Buzzer         | PB0            | Output    |
+| Green LED      | PB1            | Output    |
+| Yellow LED     | PB2            | Output    |
+| Red LED        | PB3            | Output    |
+| I²C SDA        | PC4            | Bi-dir    |
+| I²C SCL        | PC5            | Output    |
+| USART TX       | PD1            | Output    |
+| USART RX       | PD0            | Input     |
+
 ### Circuit Diagram
 Proteus:
 <img width="1040" height="872" alt="image" src="https://github.com/user-attachments/assets/d8de3be5-64a1-4649-bd2c-694ee239ad84" />
 
-Physic:
+Physical:
 <img width="1705" height="960" alt="image" src="https://github.com/user-attachments/assets/857c2f4a-d25c-4950-b6ea-ac9b143d36ac" />
 
 
-## 3. Software Implementation (wait for final code)
-### System Initialization
-- Configure `DDRD`: IR sensor pins (PD2, PD3) as inputs; LED and buzzer pins as outputs.
-- Initialize USART0: set baud-rate divisor in `UBRR0H:UBRR0L`, enable transmitter via `UCSR0B`, set 8N1 frame format in `UCSR0C`.
-- Initialize ADC: configure `ADMUX` for AVcc reference on channel 0 (PC0); enable ADC with prescaler in `ADCSRA`.
-- Initialize TWI and LCD: write bit-rate divider to `TWBR`, enable peripheral via `TWCR`, perform LCD power-on sequence using the HD44780 nibble protocol over PCF8574.
-- Configure external interrupts: set `EICRA` for falling-edge detection on INT0 and INT1; enable both lines in `EIMSK`.
-- Read the last overspeed value from EEPROM and display it on the LCD.
+## 3. Software Implementation
+### Libraries Used
+ 
+| Library               | File  | Purpose                          |
+| --------------------- | ----- | -------------------------------- |
+| `Wire.h`              | `.ino`| I²C bus communication            |
+| `LiquidCrystal_I2C.h` | `.ino`| I²C-backed 16×2 LCD driver       |
 
-### Main Loop
-- Poll ADC channel 0, map the 10-bit result (0–1023) to a speed threshold in the range 20–100 km/h, and update the LCD threshold display.
-- Check the flag set by the INT1 ISR; if set, read the captured Timer1 count, compute vehicle speed, classify it, and drive the outputs accordingly.
-- If an overspeed event occurred, write the speed value to EEPROM using the `EEAR` / `EEDR` / `EECR` register sequence.
-- Return to monitoring state.
+### Algorithm
+ 
+**1. System Initialization**
+- Configure GPIO via `DDRD` and `DDRB`: PD2 and PD3 as inputs with pull-ups enabled; PB0–PB3 as outputs, all initially off.
+- Initialize USART at 9600 baud; set serial timeout to 100 ms.
+- Initialize I²C LCD at address `0x27` (16×2); display `"ETLE Detector"` / `"Initializing..."` during startup.
+- Turn yellow LED on as idle indicator.
+- Wait 1 second for Proteus to stabilize, then flush the serial buffer.
+- Display `"Waiting..."` on LCD and print operating instructions to the Serial Monitor.
+
+  
+**2. Main Loop**
+- Turn yellow LED on; display `"Waiting..."` on LCD; reset `g_status` and `g_speed10` to zero.
+- Continuously poll for input — whichever arrives first:
+  - **IR Sensor 1 (PD2) LOW** → run Sensor mode.
+- Once a valid result is obtained, display speed and status on the LCD and Serial Monitor for 3 seconds, turn the buzzer off, then return to idle.
 
 ## 4. Test and Performance Evaluation
 ### Test Cases
 | # | Scenario             | Threshold (km/h) | Expected LED | Expected LCD     | Screenshot |
 | - | -------------------- | ---------------- | ------------ | ---------------- | --------------- |
 | 1 | Idle state  | 0               | Yellow       | `Waiting`       | <img width="1040" height="872" alt="image" src="https://github.com/user-attachments/assets/e155b44e-acba-4075-b8c0-0ea20c32c87c" />|
-| 2 | Within safe range    | 50               | Green        | `SAFE SPEED`     |<img width="1282" height="901" alt="image" src="https://github.com/user-attachments/assets/a7b3d0d8-fa87-4bd1-9bb7-9d2752364607" />|
+| 2 | Safe speed    | 50               | Green        | `SAFE SPEED`     |<img width="1282" height="901" alt="image" src="https://github.com/user-attachments/assets/a7b3d0d8-fa87-4bd1-9bb7-9d2752364607" />|
 | 3 | Above speed limit      | 50               | Red          | `OVER SPEED!`    |<img width="1272" height="901" alt="image" src="https://github.com/user-attachments/assets/78241f6c-ee43-4eb2-92eb-015d988b2d5c" />|
 
 ### Evaluation
-OTW after test
+The ETLE Speed Detector successfully demonstrated the integration of all required AVR Assembly modules. Hardware interrupts (INT0 and INT1) triggered Timer1 immediately on each sensor event, making accurate elapsed-time measurement without blocking the CPU. I²C reduced the pin count needed for the LCD. The main challenge encountered was that the FC-51 sensors required their diodes to be manually bent to face across the track, but could not reach a perfect 90° angle, raising the beam slightly above the track surface. This prevented standard low-profile Hot Wheels cars from being detected, so a taller car was used instead
 
 ## 5. Conclusion and Future Work
 ### Conclusion
